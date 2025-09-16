@@ -1,35 +1,46 @@
-# JSON Q&A Bot (Streamlit)
+# JSON Q&A Bot (Streamlit + Hugging Face LLM)
 
-Um app no Streamlit para **fazer perguntas sobre um arquivo JSON**, sem depender de APIs externas.
+App no Streamlit que responde perguntas sobre um **arquivo JSON**, com duas opções de resposta:
+1) Heurística local (TF‑IDF)
+2) **LLM via Hugging Face Inference API** (recomendado)
 
-## Como usar no streamlit.io (Community Cloud)
+## Passos para publicar no streamlit.io
 
-1. Crie um novo repositório no GitHub e envie estes arquivos: `app.py`, `requirements.txt` e (opcional) `sample.json`.
-2. No [Streamlit Community Cloud](https://share.streamlit.io/), conecte o repositório e escolha a branch e o arquivo `app.py`.
-3. Deploy. O app abrirá pedindo para **enviar um JSON**, **colar** o conteúdo, ou **carregar o exemplo**.
+1. Crie um repositório no GitHub com estes arquivos: `app.py`, `requirements.txt`, `sample.json` e `README.md`.
+2. No Streamlit Community Cloud, conecte o repositório e selecione o arquivo `app.py`.
+3. **(Opcional LLM)** Adicione um **Secret** chamado `HF_TOKEN` com seu token do Hugging Face:
+   - Vá em *Settings → Secrets*, cole:
+     ```
+     HF_TOKEN = "hf_xxx_seu_token_aqui"
+     ```
+4. Faça o deploy. No app, ative **"Usar LLM"** na barra lateral e escolha o `Model ID` (ex.: `meta-llama/Meta-Llama-3.1-8B-Instruct`).
 
-## Recursos
+> Dica: alguns modelos gratuitos podem estar ocupados/limitar tokens. Se ocorrer erro/timeout, troque de modelo ou reduza `max_new_tokens`.
 
-- Upload de arquivo `.json` ou colagem do conteúdo.
-- Visualização do JSON "achatado" com caminhos (`path`).
-- Busca por **linguagem natural** com TF‑IDF (local, sem API).
-- Suporte a **JSONPath** via `jsonpath-ng` (ex: `$..itens[?(@.preco > 500)]`).
-- Interface de chat com histórico.
+## Como funciona
 
-## Dica
+- O JSON é "achatado" em pares `path -> valor`.
+- Uma busca TF‑IDF seleciona os trechos mais relevantes ao que foi perguntado.
+- O contexto é enviado ao LLM com uma instrução para responder **apenas com base nesses dados**.
+- Se o LLM estiver desativado ou sem token, a resposta heurística lista os caminhos e valores relevantes.
 
-Pergunte algo como:
-- "Qual é o preço do SKU A6-400W?"
-- "Quais departamentos existem?"
-- "Mostre os itens com estoque maior que 5" (use JSONPath para filtros numéricos).
+## Exemplos de modelos (Hugging Face)
 
-## Desenvolvimento local
+- `meta-llama/Meta-Llama-3.1-8B-Instruct`
+- `Qwen/Qwen2.5-7B-Instruct`
+- `mistralai/Mixtral-8x7B-Instruct-v0.1`
+- `google/gemma-2-9b-it`
+
+## Rodar localmente
 
 ```bash
 pip install -r requirements.txt
+export HF_TOKEN=hf_xxx  # ou configure no app
 streamlit run app.py
 ```
 
-## Licença
+## Segurança
 
-MIT
+- O JSON é processado apenas em memória do app.
+- O LLM recebe apenas os trechos relevantes, não o arquivo completo.
+- Não armazena o token; usa sessão/Secrets do Streamlit.
